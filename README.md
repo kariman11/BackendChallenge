@@ -1,29 +1,39 @@
-# Backend Challenge (Laravel 11 + Docker)
 
-## 🚀 Overview
-
-This project implements the complete **Orthoplex Backend Development Challenge**, built with:
-
-- **Laravel 11**
-- **MySQL 8**
-- **Redis**
-- **Mailpit**
-- **Docker Compose**
-- **JWT Authentication**
-- **2FA (TOTP)**
-- **Magic Link Login**
-- **RBAC with Roles & Permissions**
-- **Organization Multi‑Tenancy**
-- **Login Analytics**
-- **Webhooks (Signed, Queued, Retry)**
-- **GDPR Export + Delete Workflow**
-- **Swagger/OpenAPI Documentation**
-
-This README explains how to set up, run, and understand the structure of the project.
+# Backend Challenge
+### Laravel 11 • Docker • JWT • 2FA • Magic Link • RBAC • Webhooks • GDPR • Swagger
 
 ---
 
-# 📦 1. Project Architecture
+<p align="center">
+  <img src="https://dummyimage.com/1200x250/000/ffffff&text=Backend+Challenge" />
+</p>
+
+---
+
+## ✨ Overview
+
+This repository contains the full backend implementation for the **Orthoplex Backend Challenge**, built with:
+
+- Laravel **11**
+- MySQL **8**, Redis, Nginx
+- Docker + Docker Compose
+- JWT Authentication
+- 2FA (TOTP)
+- Magic Link Login
+- Multi‑Tenancy (Organizations)
+- Role‑Based Access Control (RBAC)
+- Webhooks (signed + queued)
+- Login Analytics (rollup + caching)
+- GDPR Export & Delete Workflow
+- Swagger/OpenAPI Documentation (PHP Attributes)
+- Idempotency Middleware
+- Queue Workers
+
+The project is fully containerized and ready to run with **one bootstrap command**.
+
+---
+
+## 🏗 Project Structure
 
 ```
 BackendChallenge/
@@ -33,40 +43,44 @@ BackendChallenge/
 │   ├── Models/
 │   ├── Jobs/
 │   ├── Services/
-│   ├── Swagger/   <-- OpenAPI PHP Attribute Definitions
+│   ├── Swagger/          # → OpenAPI Attribute Classes
 │   └── ...
 │
 ├── docker/
-│   ├── docker-compose.yml
-│   ├── mysql/
+│   ├── nginx/
 │   ├── php/
-│   └── nginx/
+│   ├── mysql/
+│   └── docker-compose.yml
 │
 ├── scripts/
-│   └── bootstrap.sh   <-- One-command environment setup
+│   └── bootstrap.sh      # → One-command setup
 │
-├── routes/api.php
-├── routes/swagger.php
+├── routes/
+│   ├── api.php
+│   └── swagger.php
+│
 ├── config/l5-swagger.php
 └── README.md
 ```
 
 ---
 
-# 🐳 2. Docker Environment
+## 🐳 Docker Environment
 
-This project includes a **complete Docker environment**:
+This project includes:
 
-- **PHP 8.3**
-- **Nginx**
-- **MySQL 8** (port 3307)
-- **Redis**
-- **Mailpit** (SMTP testing)
-- **phpMyAdmin**
+| Service | Description | URL |
+|--------|-------------|-----|
+| **API** | Laravel 11 | http://localhost:8001 |
+| **Docs** | Swagger UI | http://localhost:8001/docs |
+| **Mailpit** | Email testing | http://localhost:8025 |
+| **phpMyAdmin** | DB UI | http://localhost:8082 |
+| **MySQL** | 3307 (local) | docker internal: `mysql:3306` |
+| **Redis** | Queue/Cache | Docker internal |
 
 ---
 
-# ⚡ 3. One‑Command Setup
+## ⚡ One‑Command Setup
 
 Run:
 
@@ -74,41 +88,39 @@ Run:
 ./scripts/bootstrap.sh
 ```
 
-This script:
+This will:
 
-1. Starts Docker containers
-2. Installs Composer dependencies
-3. Generates app key
-4. Runs migrations
-5. Shows access URLs
-
-After running:
-
-| Service | URL |
-|--------|-----|
-| Laravel API | http://localhost:8001 |
-| Swagger Docs | http://localhost:8001/docs |
-| Mailpit | http://localhost:8025 |
-| phpMyAdmin | http://localhost:8082 |
+1. Build & start Docker containers
+2. Install composer dependencies
+3. Run migrations
+4. Generate app key
+5. Show URLs
 
 ---
 
-# 🔐 4. Authentication Features
+## 🔐 Authentication Features
 
-### ✔ JWT Auth
-### ✔ Email Verification (Required Before Login)
-### ✔ Login Throttling + Lockout
-### ✔ 2FA (TOTP)
-### ✔ Magic Link Login
-### ✔ Idempotency Keys
-
-Magic links and email verification use Mailpit.
+✔ Login with JWT  
+✔ Email verification (required to login)  
+✔ 2FA (Google Authenticator TOTP)  
+✔ Magic-link login via email  
+✔ Login throttling  
+✔ Idempotency-Key middleware
 
 ---
 
-# 🧩 5. RBAC (Roles & Permissions)
+## 🏢 Organizations (Multi‑Tenant)
 
-Roles:
+- Users can belong to multiple organizations
+- Each membership has a **role**
+- Enforced using `org.permission:*` middleware
+- Webhooks sent on org events
+
+---
+
+## 🧩 RBAC (Roles & Permissions)
+
+Included roles:
 
 - **owner**
 - **admin**
@@ -119,51 +131,22 @@ Permissions include:
 
 - `users.invite`
 - `users.read`
-- `users.update`
 - `users.delete`
+- `users.update`
 - `analytics.read`
 
-Middleware: `org.permission:*`
-
 ---
 
-# 🏢 6. Multi-Tenancy: Organizations
-
-- A user can belong to multiple organizations
-- Each membership has a role
-- Owners can invite users via email
-- Invitations include accept tokens
-
-Example route:
-
-```
-POST /api/orgs/{org}/add-member
-```
-
-Webhook fired:
-
-```
-organization.member_invited
-```
-
----
-
-# 📊 7. Login Analytics
+## 📊 Login Analytics
 
 Two tables:
 
-- **login_events** (raw events)
-- **login_daily** (aggregated)
+- `login_events`
+- `login_daily` (rolled up)
 
-On login:
+Command:
 
-1. Update user last_login_at + login_count
-2. Queue RecordLoginEvent job
-3. Fire webhook (`user.login`)
-
-Nightly cron:
-
-```
+```bash
 php artisan analytics:rollup-logins
 ```
 
@@ -176,58 +159,48 @@ GET /api/users/inactive
 
 ---
 
-# 🔄 8. Webhooks (Outbound)
+## 🔄 Webhooks
 
-Queued delivery with retry + HMAC:
-
-Events:
+Webhook events fired:
 
 - `user.login`
-- `user.verified`
 - `organization.created`
 - `organization.member_invited`
-- GDPR events
+- `gdpr.export.ready`
+- `gdpr.delete.approved`
 
-Implementation is in:
+Webhooks are:
 
-```
-App\Services\WebhookService
-App\Jobs\SendWebhook
-```
-
----
-
-# 🛡 9. GDPR Features
-
-### ✔ User Export (ZIP of JSON files)
-Generated asynchronously.  
-Download available once via token.
-
-### ✔ GDPR Delete Request
-Owner/admin must approve:
-
-```
-POST /api/users/gdpr/{id}/approve
-POST /api/users/gdpr/{id}/reject
-```
+- Signed via HMAC SHA‑256
+- Queued
+- Retried automatically
 
 ---
 
-# 📘 10. Swagger / OpenAPI Documentation
+## 🛡 GDPR Features
 
-Generated via PHP attributes:
+### User Export
+- Asynchronously packaged ZIP
+- One‑time download token
 
-```
-app/Swagger/*
-```
+### Delete Request Workflow
+- Member submits request
+- Admin/Owner approves/rejects
+- Delete job queued
 
-Generate:
+---
 
-```
+## 📘 Swagger / OpenAPI Documentation
+
+Generated using **PHP Attributes** (OpenAPI 3.1).
+
+Generate docs:
+
+```bash
 php artisan l5-swagger:generate
 ```
 
-Open Documentation:
+URL:
 
 ```
 http://localhost:8001/docs
@@ -235,39 +208,47 @@ http://localhost:8001/docs
 
 ---
 
-# 🧪 11. Testing the API
+## 🧪 Postman Collection
 
-Import into Postman:
+The repository includes a full **Postman collection** covering:
 
-1. Register user
-2. Verify email (Mailpit)
-3. Login
-4. Test 2FA
-5. Create organization
-6. Invite member
-7. Trigger webhooks
-8. Trigger analytics
-9. Use magic link login
+- Registration
+- Login
+- 2FA setup/enable/disable
+- Magic link login
+- Org creation/invite/accept
+- Analytics endpoints
+- GDPR features
+- User exports
 
 ---
 
-# 📝 12. Environment Variables
-
-Update `.env`:
+## 🔧 Environment Variables
 
 ```
-APP_ENV=local
-APP_KEY=
 APP_URL=http://localhost:8001
 
 DB_HOST=mysql
 DB_PORT=3306
-DB_DATABASE=orthoplex
 DB_USERNAME=laravel
 DB_PASSWORD=secret
 
 MAIL_HOST=mailpit
 MAIL_PORT=1025
 ```
+
+---
+
+## 👤 Author
+
+**Kariman Nasr**  
+Full Stack Engineer  
+📌 Based in Cairo, Egypt  
+💼 Specialized in Laravel, React, Multi‑Tenant SaaS, Complex ERP Modules
+
+---
+
+## ⭐ If this project helped you
+Feel free to star ⭐ the repo — it means a lot!
 
 ---
