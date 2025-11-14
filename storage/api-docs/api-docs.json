@@ -1,0 +1,772 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Orthoplex API",
+        "description": "Orthoplex Backend Challenge API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/users/top-logins": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Top users by login activity",
+                "operationId": "c8723032beab0dc24fce6896548626b3",
+                "parameters": [
+                    {
+                        "name": "window",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "example": "7d"
+                        }
+                    },
+                    {
+                        "name": "org_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/inactive": {
+            "get": {
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Inactive users report",
+                "operationId": "254934a9e5ac422149080f5119b05ceb",
+                "parameters": [
+                    {
+                        "name": "window",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "org_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register a new user",
+                "operationId": "1491d1aa2b155b8dfde7b0995b6eaf91",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Registered"
+                    },
+                    "409": {
+                        "description": "Email exists"
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login user and return JWT",
+                "operationId": "a2a5222c38795473043fa12dbdbc56e5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "expires_in": {
+                                            "type": "integer"
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/api/email/verify/{id}/{hash}": {
+            "get": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Verify email via signed URL",
+                "operationId": "7d84ed529f1c49a9c656034dd1242560",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "hash",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email verified"
+                    },
+                    "403": {
+                        "description": "Invalid or expired link"
+                    }
+                }
+            }
+        },
+        "/api/email/resend": {
+            "post": {
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Resend verification link",
+                "operationId": "304f7aba551ec24f68ca6b0d0affcd65",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sent"
+                    }
+                }
+            }
+        },
+        "/api/users/export/download/{token}": {
+            "get": {
+                "tags": [
+                    "GDPR"
+                ],
+                "summary": "Download GDPR export (one-time token)",
+                "operationId": "6e953acf9491183e6a00d5db3fb8e030",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File download"
+                    }
+                }
+            }
+        },
+        "/api/users/gdpr/{id}/approve": {
+            "post": {
+                "tags": [
+                    "GDPR"
+                ],
+                "summary": "Approve GDPR delete request (admin)",
+                "operationId": "c440864b8cb2de9c896d7d467ba14c14",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Approved"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/gdpr/{id}/reject": {
+            "post": {
+                "tags": [
+                    "GDPR"
+                ],
+                "summary": "Reject GDPR delete request",
+                "operationId": "6cae1542e4bea8bdf6a180854221acfb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rejected"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/invitations/accept": {
+            "get": {
+                "tags": [
+                    "Invitations"
+                ],
+                "summary": "Web page for invitation acceptance (optional)",
+                "operationId": "25be38764fb0f062d2857d37667dd655",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "HTML page"
+                    }
+                }
+            }
+        },
+        "/api/magic": {
+            "post": {
+                "tags": [
+                    "MagicLink"
+                ],
+                "summary": "Request a magic login link",
+                "operationId": "32221ee9c5c13f2c7072c585eed14a5c",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sent"
+                    }
+                }
+            }
+        },
+        "/api/magic/consume/{token}": {
+            "get": {
+                "tags": [
+                    "MagicLink"
+                ],
+                "summary": "Consume magic link token",
+                "operationId": "8e5873c0e4a4e654adffad6794adfc76",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token consumed and JWT returned"
+                    }
+                }
+            }
+        },
+        "/api/orgs": {
+            "get": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "List user's organizations",
+                "operationId": "4acf5be99583048522efee09b34df9c2",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Create organization",
+                "operationId": "d4803a878ae8a08d5fb0142dbbc4a047",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/orgs/{org}/add-member": {
+            "post": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Invite an email to organization (creates invitation)",
+                "operationId": "6278135b547cf8658167ca17f87662c8",
+                "parameters": [
+                    {
+                        "name": "org",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "role": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invitation sent"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/orgs/{org}/invites/accept/{token}": {
+            "post": {
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Accept organization invitation",
+                "operationId": "b4069eb921445ddd36b1a02edc5a7c0c",
+                "parameters": [
+                    {
+                        "name": "org",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Joined org"
+                    }
+                }
+            }
+        },
+        "/api/2fa/setup": {
+            "post": {
+                "tags": [
+                    "2FA"
+                ],
+                "summary": "Generate 2FA secret and QR",
+                "operationId": "1e5a95d73385dd8173b212a4a41ea716",
+                "responses": {
+                    "200": {
+                        "description": "Secret generated"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/2fa/enable": {
+            "post": {
+                "tags": [
+                    "2FA"
+                ],
+                "summary": "Enable 2FA with OTP",
+                "operationId": "dc7d6b582764b4996e5acb89d1b8630b",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "otp": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Enabled"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/2fa/disable": {
+            "post": {
+                "tags": [
+                    "2FA"
+                ],
+                "summary": "Disable 2FA",
+                "operationId": "8cbfb48a8154fb4c79bed4ee9f4992ae",
+                "responses": {
+                    "200": {
+                        "description": "Disabled"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List users (cursor pagination + RSQL filters)",
+                "operationId": "7bda1279d97bc67dcbb870bfbd8dab9f",
+                "parameters": [
+                    {
+                        "name": "filter",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "fields",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "include",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{id}/export": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Request GDPR export for user",
+                "operationId": "0e2d57c2583b6e066bc0aec49e46d8b3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Export queued"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/users/gdpr/request-delete": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Request GDPR delete (creates request)",
+                "operationId": "b3aa68683ecf96f8035dba7025b13b1c",
+                "responses": {
+                    "200": {
+                        "description": "Request created"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "email_verified_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "two_factor_enabled": {
+                        "type": "boolean"
+                    },
+                    "last_login_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "login_count": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Authentication endpoints"
+        },
+        {
+            "name": "Email",
+            "description": "Email verification"
+        },
+        {
+            "name": "GDPR",
+            "description": "Exports & Delete Requests"
+        },
+        {
+            "name": "Invitations",
+            "description": "Invitation management"
+        },
+        {
+            "name": "MagicLink",
+            "description": "Passwordless magic links"
+        },
+        {
+            "name": "Organizations",
+            "description": "Organization management"
+        },
+        {
+            "name": "2FA",
+            "description": "Two Factor Authentication (TOTP)"
+        },
+        {
+            "name": "Users",
+            "description": "User lifecycle and management"
+        },
+        {
+            "name": "Analytics",
+            "description": "Analytics"
+        }
+    ]
+}
